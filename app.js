@@ -594,3 +594,35 @@ function getDateRange() {
     const dates = entries.map(e => e.fecha).filter(Boolean).sort();
     return `${formatDate(dates[0])} - ${formatDate(dates[dates.length - 1])}`;
 }
+
+function exportToCSV() {
+    if (!entries || entries.length === 0) {
+        alert('No hay registros cargados para exportar.');
+        return;
+    }
+    const sorted = [...entries].sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
+    const headers = ['ID', 'Fecha', 'Descripción', 'Quién Pagó', 'Tipo', 'Monto ARS', 'TC Blue', 'Monto USD', 'Moneda Original', 'Monto Original', 'Fuente'];
+    const rows = sorted.map(e => [
+        `"${e.id || ''}"`,
+        `"${e.fecha || ''}"`,
+        `"${(e.descripcion || '').replace(/"/g, '""')}"`,
+        `"${e.quienPago || ''}"`,
+        `"${e.tipo || 'gasto'}"`,
+        e.montoARS !== undefined && e.montoARS !== null ? e.montoARS : '',
+        e.tcBlue !== undefined && e.tcBlue !== null ? e.tcBlue : '',
+        e.montoUSD !== undefined && e.montoUSD !== null ? e.montoUSD : '',
+        `"${e.monedaOriginal || ''}"`,
+        e.montoOriginal !== undefined && e.montoOriginal !== null ? e.montoOriginal : '',
+        `"${e.fuente || ''}"`
+    ]);
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `gastos_obra_bayon_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
